@@ -228,40 +228,6 @@ The front end of the application was built using a number of React components. I
 #### Home
 The logged-out home screen presented the user with register and login buttons. Added to this, the user was also presented with a number of carousels, showing books with data served from the NY Times best-seller lists.
 
-
-### Search Component
-
-The search component was an interesting aspect to this project, as we used two different API's, and this led to a situation where a user was able to click on a book supplied by the NY Time best seller list, and we then needed to search the Google Books API for this book, so that we were able to import it in to our library with all the required information.
-
-The problem arose in that the ISBN numbers supplied by NY Times are reliable, but searching Google Books API with them is not, (as for one reason or another it is not designed that way). About 90% of the time it would work, but occasionally it would not find the correct book. For this reason we implemented some checks on the title and author of the returned book, and if they were not a close enough match then we redirected the user to the search page, and automatically searched by the books title, and then displayed the results to the user, who could then select the required book. A sample of this process can be seen below.
-
-
-	handleClick(book) {
-	    console.log(book)
-	    axios.get(`https://www.googleapis.com/books/v1/volumes?q=isbn:${book.primary_isbn13}`)
-	      .then(res => {
-	        if (!(res.data.items)) return this.setState({ searchRedirect: { title: book.title } })
-	        if (res.data.items[0].volumeInfo.title.toLowerCase() !== book.title.toLowerCase()) return this.setState({ searchRedirect: { title: book.title } })
-	        const linkTo = res.data.items[0].id
-	        this.setState({ redirect: linkTo, bookClicked: res.data.items[0] })
-	
-	      })
-	
-	      .catch(error => console.error(error))
-	  }
-
-This code performs a check on the book title from NY Times and Google books, and if there is a match it redirects to the 'add books' page, otherwise it redirects to the search page. 
-
-On the search page, when the component mounts it then checks if a query has been passed through as props, and if so it automatically searches and displays the results for the passed value.
-
-	 componentDidMount() {
-	    if (this.props.match.params.title) {
-	      this.setState({ query: this.props.match.params.title })
-	        this.fetchBooks()
-	    }
-	  }
-
-
 #### User Profile and categories
 One of the components that I worked on heavily was the UserProfile.js.
 This component took information from two of our API endpoints and used tokenisation to ensure that the data returned, only related to the user that was logged in.
@@ -309,40 +275,39 @@ After being presented with the data, a user was then able to amend the data. The
                     checked={this.state.categories.includes('animals') ? true : false}
                   />
 ```
+#### Search Component
 
-#### Slick Carousel 
+The search component was an interesting aspect to this project, as we used two different API's, and this led to a situation where a user was able to click on a book supplied by the NY Time best seller list, and we then needed to search the Google Books API for this book, so that we were able to import it in to our library with all the required information.
 
-We added the slick carousel feature in two areas of the application and these can been seen on the main home page and the user home. However, having just images just planted on the page we knew that we had to bring some relevance to the books being displayed. The slick carousels on the main home page are displaying books from the NY Times API and the slick carousel on the user home is displaying the books from the chosen categories by the user at registration with also the NY Times API. 
-
-Whether you were clicking on a book on the home page or the user home we wanted to either redirect the user to the single book page of that particular book or take them through to the search book page where we would display books with similar titles. When we displayed a book on the single book page or when a user would search a book this would be done by using a GET request from the Google Books API. However, a great challenge was being able to click on a category book on the user home or a book on the main homepage which was displayed by the NY Times API and either redirect the user to the single book page and show all the information that we were requesting or if the Google Books API didn't have the book, then we would redirect the user to the search book page and on the `componentDidMount()` method we would match the title of the book from the NY Times API with the Google Books API to then display books with a similar title. 
-
-This was a great problem solved by Peter
+The problem arose in that the ISBN numbers supplied by NY Times are reliable, but searching Google Books API with them is not, (as for one reason or another it is not designed that way). About 90% of the time it would work, but occasionally it would not find the correct book. For this reason we implemented some checks on the title and author of the returned book, and if they were not a close enough match then we redirected the user to the search page, and automatically searched by the books title, and then displayed the results to the user, who could then select the required book. A sample of this process can be seen below.
 
 ```js
-  handleClick(book) {
-    console.log(book)
-    axios.get(`https://www.googleapis.com/books/v1/volumes?q=isbn:${book.primary_isbn13}`)
-      .then(res => {
-        if (!(res.data.items)) return this.setState({ searchRedirect: { title: book.title } })
-        if (res.data.items[0].volumeInfo.title.toLowerCase() !== book.title.toLowerCase()) return this.setState({ searchRedirect: { title: book.title } })
-        const linkTo = res.data.items[0].id
-        this.setState({ redirect: linkTo, bookClicked: res.data.items[0] })
-
-      })
-
-      .catch(error => console.error(error))
-  }
+	handleClick(book) {
+	    console.log(book)
+	    axios.get(`https://www.googleapis.com/books/v1/volumes?q=isbn:${book.primary_isbn13}`)
+	      .then(res => {
+	        if (!(res.data.items)) return this.setState({ searchRedirect: { title: book.title } })
+	        if (res.data.items[0].volumeInfo.title.toLowerCase() !== book.title.toLowerCase()) return this.setState({ searchRedirect: { title: book.title } })
+	        const linkTo = res.data.items[0].id
+	        this.setState({ redirect: linkTo, bookClicked: res.data.items[0] })
+	
+	      })
+	
+	      .catch(error => console.error(error))
+	  }
 ```
+This code performs a check on the book title from NY Times and Google books, and if there is a match it redirects to the 'add books' page, otherwise it redirects to the search page. 
 
-```js 
-    const webId = this.state.redirect
-    const titleForDirect = this.state.searchRedirect
-    if (this.state.redirect) return <Redirect to={{ pathname: `/book/${webId}`, state: { book: this.state.bookClicked } }} />
-    if (this.state.searchRedirect) return <Redirect to={{ pathname: `/books/new/${titleForDirect.title}`, state: { book: this.state.bookClicked } }} />
-    if (this.state.bookList.length === 0) return <div className="CarouselSpinner"><CarouselSpinner /></div>
+On the search page, when the component mounts it then checks if a query has been passed through as props, and if so it automatically searches and displays the results for the passed value.
+
+```js
+	 componentDidMount() {
+	    if (this.props.match.params.title) {
+	      this.setState({ query: this.props.match.params.title })
+	        this.fetchBooks()
+	    }
+	  }
 ```
-As you see above, depending on what state was true we would then redirect them to the necessary page. To redirect the user to the single book page we had to pass through the book id and but to make sure that the book was correct we used the `primary_isbn13` number. If the user was redirected to the search book page we would pass through the title in order that we could then match in the `{SearchNewBooks}` component.
-
 
 #### Single Book
 
